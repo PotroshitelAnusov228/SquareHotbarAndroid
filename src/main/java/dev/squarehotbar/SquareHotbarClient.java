@@ -1,4 +1,3 @@
-
 package dev.squarehotbar;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -48,5 +47,6 @@ public final class SquareHotbarClient implements ClientModInitializer {
             }
         )
             ;
+        
     }
 }
