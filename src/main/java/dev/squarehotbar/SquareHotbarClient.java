@@ -44,5 +44,6 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 }
             }
         );
+
     }
 }
