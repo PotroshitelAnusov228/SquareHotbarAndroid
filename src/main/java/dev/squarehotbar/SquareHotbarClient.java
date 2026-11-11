@@ -1,4 +1,4 @@
-package dev.squarehotbar;
+ackage dev.squarehotbar;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -37,16 +37,4 @@ public final class SquareHotbarClient implements ClientModInitializer {
                             0xFF555555
                         );
 
-                        graphics.fill(
-                            slotX + 2, slotY + 2,
-                            slotX + size - 2, slotY + size - 2,
-                            0xFF252525
-                        );
-                    }
-                }
-            }
-        )
-            ;
-        
-    }
-}
+                        graphics.fill
