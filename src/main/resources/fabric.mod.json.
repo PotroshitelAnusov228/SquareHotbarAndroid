@@ -1,1 +1,19 @@
-
+{
+  "schemaVersion": 1,
+  "id": "squarehotbar",
+  "version": "0.1.0",
+  "name": "SquareHotbar",
+  "description": "A movable 3x3 touch-friendly hotbar HUD for Minecraft Java.",
+  "authors": ["BabaChai"],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.squarehotbar.SquareHotbarClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21"
+  }
+}
