@@ -2,7 +2,7 @@ ackage dev.squarehotbar;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.util.Identifier;
 
 public final class SquareHotbarClient implements ClientModInitializer {
 
