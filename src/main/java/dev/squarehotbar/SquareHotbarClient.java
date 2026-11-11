@@ -37,4 +37,5 @@ public final class SquareHotbarClient implements ClientModInitializer {
                             0xFF555555
                         );
 
-                        graphics.fill
+                        graphi
+                            cs.fill
