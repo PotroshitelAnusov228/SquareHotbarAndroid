@@ -1,15 +1,52 @@
+
 package dev.squarehotbar;
 
 import net.fabricmc.api.ClientModInitializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
 
 public final class SquareHotbarClient implements ClientModInitializer {
-    public static final String MOD_ID = "squarehotbar";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("SquareHotbar initialized!");
+        HudElementRegistry.addLast(
+            Identifier.fromNamespaceAndPath("squarehotbar", "hud"),
+            (graphics, tickCounter) -> {
+                int size = 34;
+                int gap = 3;
+                int total = size * 3 + gap * 2;
+
+                int x = 12;
+                int y = 12;
+
+                // Фон панели
+                graphics.fill(
+                    x - 4, y - 4,
+                    x + total + 4, y + total + 4,
+                    0xAA151515
+                );
+
+                // Девять квадратных слотов
+                for (int row = 0; row < 3; row++) {
+                    for (int col = 0; col < 3; col++) {
+                        int slotX = x + col * (size + gap);
+                        int slotY = y + row * (size + gap);
+
+                        graphics.fill(
+                            slotX, slotY,
+                            slotX + size, slotY + size,
+                            0xFF555555
+                        );
+
+                        graphics.fill(
+                            slotX + 2, slotY + 2,
+                            slotX + size - 2, slotY + size - 2,
+                            0xFF252525
+                        );
+                    }
+                }
+            }
+        )
+            ;
     }
 }
