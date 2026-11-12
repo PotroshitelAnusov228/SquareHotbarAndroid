@@ -7,7 +7,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 
@@ -40,17 +39,23 @@ public final class SquareHotbarClient implements ClientModInitializer {
             (graphics, tickCounter) -> renderHud(MinecraftClient.getInstance(), graphics)
         );
 
-        // Add a native clickable close button while the player inventory is open.
-        // Screen widgets receive normal GUI input, unlike TouchController's HUD pointer bridge.
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if (screen instanceof InventoryScreen) {
-                screen.addDrawableChild(
-                    ButtonWidget.builder(Text.literal("CLOSE"), button -> client.setScreen(null))
-                        .dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT)
-                        .build()
-                );
-            }
-        });
+    }
+
+
+    private static final class CloseableInventoryScreen extends InventoryScreen {
+        private CloseableInventoryScreen(net.minecraft.entity.player.PlayerEntity player) {
+            super(player);
+        }
+
+        @Override
+        protected void init() {
+            super.init();
+            addDrawableChild(
+                ButtonWidget.builder(Text.literal("CLOSE"), button -> MinecraftClient.getInstance().setScreen(null))
+                    .dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT)
+                    .build()
+            );
+        }
     }
 
     private static void handleMouseClick(MinecraftClient client) {
@@ -140,7 +145,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
 
         if (x >= X && x <= X + TOTAL
                 && y >= BUTTON_Y && y <= BUTTON_Y + BUTTON_HEIGHT) {
-            client.setScreen(new InventoryScreen(client.player));
+            client.setScreen(new CloseableInventoryScreen(client.player));
             return;
         }
 
