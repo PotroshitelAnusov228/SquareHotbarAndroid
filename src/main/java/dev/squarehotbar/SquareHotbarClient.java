@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
@@ -136,10 +137,10 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 int slotX = x + col * (size + gap);
                 int slotY = y + row * (size + gap);
                 // Reuse Minecraft's original inventory slot sprite, scaled to our square layout.
-                graphics.drawGuiTexture(slotTexture, slotX, slotY, size, size);
+                graphics.drawGuiTexture(RenderPipelines.GUI_TEXTURED, slotTexture, slotX, slotY, size, size);
                 if (slot == selectedSlot) {
                     // Use the exact vanilla hotbar selection frame instead of a custom-colored border.
-                    graphics.drawGuiTexture(selectionTexture, slotX - 4, slotY - 4, size + 8, size + 8);
+                    graphics.drawGuiTexture(RenderPipelines.GUI_TEXTURED, selectionTexture, slotX - 4, slotY - 4, size + 8, size + 8);
                 }
 
                 ItemStack stack = client.player.getInventory().getStack(slot);
