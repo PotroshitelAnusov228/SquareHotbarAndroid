@@ -130,6 +130,34 @@ public final class SquareHotbarClient implements ClientModInitializer {
         Identifier slotTexture = Identifier.of("squarehotbar", "textures/gui/slot.png");
         Identifier selectionTexture = Identifier.ofVanilla("hud/hotbar_selection");
 
+        // Pass 1: draw every slot background so no later slot can cover the selection frame.
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                int slotX = x + col * total / 3;
+                int slotY = y + row * total / 3;
+                int slotWidth = x + (col + 1) * total / 3 - slotX;
+                int slotHeight = y + (row + 1) * total / 3 - slotY;
+                graphics.drawTexture(
+                    RenderPipelines.GUI_TEXTURED, slotTexture,
+                    slotX, slotY, 0.0f, 0.0f,
+                    slotWidth, slotHeight, 22, 22, 22, 22
+                );
+            }
+        }
+
+        // Pass 2: draw the selected-slot frame over all backgrounds.
+        int selectedCol = selectedSlot % 3;
+        int selectedRow = selectedSlot / 3;
+        int selectedX = x + selectedCol * total / 3;
+        int selectedY = y + selectedRow * total / 3;
+        int selectedWidth = x + (selectedCol + 1) * total / 3 - selectedX;
+        int selectedHeight = y + (selectedRow + 1) * total / 3 - selectedY;
+        graphics.drawGuiTexture(
+            RenderPipelines.GUI_TEXTURED, selectionTexture,
+            selectedX - 4, selectedY - 4, selectedWidth + 8, selectedHeight + 8
+        );
+
+        // Pass 3: draw item icons and overlays above the slot frame.
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 int slot = row * 3 + col;
@@ -137,21 +165,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 int slotY = y + row * total / 3;
                 int slotWidth = x + (col + 1) * total / 3 - slotX;
                 int slotHeight = y + (row + 1) * total / 3 - slotY;
-                // Draw the user's exact 22x22 texture edge-to-edge; fractional remainder
-                // is distributed across cells so the panel keeps its original outer size.
-                graphics.drawTexture(
-                    RenderPipelines.GUI_TEXTURED, slotTexture,
-                    slotX, slotY, 0.0f, 0.0f,
-                    slotWidth, slotHeight, 22, 22, 22, 22
-                );
-                if (slot == selectedSlot) {
-                    graphics.drawGuiTexture(RenderPipelines.GUI_TEXTURED, selectionTexture,
-                        slotX - 4, slotY - 4, slotWidth + 8, slotHeight + 8);
-                }
 
                 ItemStack stack = client.player.getInventory().getStack(slot);
                 if (!stack.isEmpty()) {
-                    // Keep item proportions centered inside the slightly enlarged seamless cell.
                     float itemScale = Math.min(slotWidth, slotHeight) / 20.0f;
                     float renderedItemSize = 16.0f * itemScale;
                     float itemX = slotX + (slotWidth - renderedItemSize) / 2.0f;
