@@ -5,6 +5,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -58,19 +59,20 @@ public final class SquareHotbarClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof HandledScreen<?> || screen instanceof CreativeInventoryScreen) {
                 ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) -> {
-                    if (client.player != null && !client.getDebugHud().shouldShowDebugHud()) {
+                    if (client.player != null) {
                         drawHotbarPanel(client, graphics);
                     }
                 });
             }
         });
 
-        HudElementRegistry.addLast(
+        HudElementRegistry.attachElementBefore(
+            VanillaHudElements.DEBUG,
             Identifier.of("squarehotbar", "hud"),
             (graphics, tickCounter) -> {
                 MinecraftClient client = MinecraftClient.getInstance();
                 if (client.player != null && client.currentScreen == null
-                    && !client.getDebugHud().shouldShowDebugHud()) {
+                   ) {
                     drawHotbarPanel(client, graphics);
                 }
             }
