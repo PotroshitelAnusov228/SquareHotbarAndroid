@@ -124,18 +124,24 @@ public final class SquareHotbarClient implements ClientModInitializer {
         int y = Math.round(screenHeight * yPosition);
         int total = size * 3 + gap * 2;
 
-        graphics.fill(x - 3, y - 3, x + total + 3, y + total + 3, 0xAA151515);
+        // Vanilla-style translucent panel behind the nine slots.
+        graphics.fill(x - 3, y - 3, x + total + 3, y + total + 3, 0xAA000000);
         int selectedSlot = client.player.getInventory().getSelectedSlot();
+        Identifier slotTexture = Identifier.ofVanilla("container/slot");
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 int slot = row * 3 + col;
                 int slotX = x + col * (size + gap);
                 int slotY = y + row * (size + gap);
-                int borderColor = slot == selectedSlot ? 0xFFFFC857 : 0xFF555555;
-
-                graphics.fill(slotX, slotY, slotX + size, slotY + size, borderColor);
-                graphics.fill(slotX + 2, slotY + 2, slotX + size - 2, slotY + size - 2, 0xFF252525);
+                // Reuse Minecraft's original inventory slot sprite, scaled to our square layout.
+                graphics.drawGuiTexture(slotTexture, slotX, slotY, size, size);
+                if (slot == selectedSlot) {
+                    graphics.fill(slotX, slotY, slotX + size, slotY + 1, 0xFFFFC857);
+                    graphics.fill(slotX, slotY + size - 1, slotX + size, slotY + size, 0xFFFFC857);
+                    graphics.fill(slotX, slotY, slotX + 1, slotY + size, 0xFFFFC857);
+                    graphics.fill(slotX + size - 1, slotY, slotX + size, slotY + size, 0xFFFFC857);
+                }
 
                 ItemStack stack = client.player.getInventory().getStack(slot);
                 if (!stack.isEmpty()) {
