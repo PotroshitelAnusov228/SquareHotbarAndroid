@@ -3,6 +3,8 @@ package dev.squarehotbar;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -30,47 +32,28 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static final Set<Integer> ACTIVE_TOUCH_POINTERS = new HashSet<>();
     private static Field touchStateModelField;
     private static Object renderEventsInstance;
+    private static Field pointerStateField;
+    private static Object invalidPointerState;
 
     @Override
     public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(SquareHotbarClient::handleMouseClick);
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof InventoryScreen) {
+                ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) ->
+                    drawHotbarPanel(client, graphics, true)
+                );
+                Screens.getButtons(screen).add(
+                    ButtonWidget.builder(Text.literal("CLOSE"), button -> client.setScreen(null))
+                        .dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT)
+                        .build()
+                );
+            }
+        });
         HudElementRegistry.addLast(
             Identifier.of("squarehotbar", "hud"),
             (graphics, tickCounter) -> renderHud(MinecraftClient.getInstance(), graphics)
         );
-    }
-
-    private static final class CloseableInventoryScreen extends InventoryScreen {
-        private CloseableInventoryScreen(net.minecraft.entity.player.PlayerEntity player) {
-            super(player);
-        }
-
-        @Override
-        protected void init() {
-            super.init();
-            this.addDrawableChild(
-                ButtonWidget.builder(Text.literal("CLOSE"), button ->
-                    MinecraftClient.getInstance().setScreen(null)
-                ).dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT).build()
-            );
-        }
-
-        @Override
-        public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-            super.render(context, mouseX, mouseY, delta);
-            MinecraftClient client = MinecraftClient.getInstance();
-            handleTouchControllerPointers(client);
-            drawHotbarPanel(client, context, true);
-        }
-
-        private boolean handleOverlayTap(MinecraftClient client, double mouseX, double mouseY) {
-            if (mouseX >= X && mouseX <= X + TOTAL
-                    && mouseY >= BUTTON_Y && mouseY <= BUTTON_Y + BUTTON_HEIGHT) {
-                client.setScreen(null);
-                return true;
-            }
-            return false;
-        }
     }
 
     private static void handleMouseClick(MinecraftClient client) {
@@ -124,6 +107,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 double screenX = normalizedX * client.getWindow().getScaledWidth();
                 double screenY = normalizedY * client.getWindow().getScaledHeight();
                 handleTap(client, screenX, screenY);
+                if (isInsideTouchProtectedArea(screenX, screenY)) {
+                    suppressTouchControllerView(pointer);
+                }
             }
             ACTIVE_TOUCH_POINTERS.retainAll(seenPointers);
         } catch (ClassNotFoundException ignored) {
@@ -131,6 +117,25 @@ public final class SquareHotbarClient implements ClientModInitializer {
         } catch (Throwable ignored) {
             // Avoid breaking the HUD if TouchController changes its internal API.
         }
+    }
+
+    private static boolean isInsideTouchProtectedArea(double x, double y) {
+        return x >= X - 4 && x <= X + TOTAL + 4
+            && y >= Y - 4 && y <= BUTTON_Y + BUTTON_HEIGHT;
+    }
+
+    private static void suppressTouchControllerView(Object pointer) throws ReflectiveOperationException {
+        if (pointerStateField == null) {
+            pointerStateField = pointer.getClass().getDeclaredField("state");
+            pointerStateField.setAccessible(true);
+        }
+        if (invalidPointerState == null) {
+            Class<?> invalidClass = Class.forName(
+                "top.fifthlight.touchcontroller.common.state.PointerState$Invalid"
+            );
+            invalidPointerState = invalidClass.getField("INSTANCE").get(null);
+        }
+        pointerStateField.set(pointer, invalidPointerState);
     }
 
     private static long readPackedPosition(Object pointer) throws ReflectiveOperationException {
@@ -149,14 +154,16 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static void handleTap(MinecraftClient client, double x, double y) {
         if (client.player == null) return;
 
-        if (client.currentScreen instanceof CloseableInventoryScreen inventoryScreen) {
-            inventoryScreen.handleOverlayTap(client, x, y);
+        if (client.currentScreen instanceof InventoryScreen) {
+            if (x >= X && x <= X + TOTAL && y >= BUTTON_Y && y <= BUTTON_Y + BUTTON_HEIGHT) {
+                client.setScreen(null);
+            }
             return;
         }
         if (client.currentScreen != null) return;
 
         if (x >= X && x <= X + TOTAL && y >= BUTTON_Y && y <= BUTTON_Y + BUTTON_HEIGHT) {
-            client.setScreen(new CloseableInventoryScreen(client.player));
+            client.setScreen(new InventoryScreen(client.player));
             return;
         }
 
