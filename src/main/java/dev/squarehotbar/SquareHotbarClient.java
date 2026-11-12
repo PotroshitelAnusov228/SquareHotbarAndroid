@@ -137,7 +137,8 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 // Draw the user's exact 22x22 slot texture, scaled to the configured slot size.
                 graphics.drawTexture(
                     RenderPipelines.GUI_TEXTURED, slotTexture,
-                    slotX, slotY, 0.0f, 0.0f, size, size, 22, 22
+                    slotX, slotY, 0.0f, 0.0f,
+                    size, size, 22, 22, 22, 22
                 );
                 if (slot == selectedSlot) {
                     // Use the exact vanilla hotbar selection frame instead of a custom-colored border.
