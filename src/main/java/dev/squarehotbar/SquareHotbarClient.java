@@ -160,10 +160,10 @@ public final class SquareHotbarClient implements ClientModInitializer {
             int row1 = this.height / 2 + 48;
             int row2 = row1 + buttonHeight + 7;
 
-            addButton(left, row1, buttonWidth, buttonHeight, "←", () -> xPosition = clamp(xPosition - 0.01f, 0.0f, 0.85f));
-            addButton(left + buttonWidth + gap, row1, buttonWidth, buttonHeight, "→", () -> xPosition = clamp(xPosition + 0.01f, 0.0f, 0.85f));
-            addButton(left + (buttonWidth + gap) * 2, row1, buttonWidth, buttonHeight, "↑", () -> yPosition = clamp(yPosition - 0.01f, 0.0f, 0.75f));
-            addButton(left + (buttonWidth + gap) * 3, row1, buttonWidth, buttonHeight, "↓", () -> yPosition = clamp(yPosition + 0.01f, 0.0f, 0.75f));
+            addButton(left, row1, buttonWidth, buttonHeight, "← 1 px", () -> xPosition = clamp(xPosition - 1.0f / this.width, 0.0f, 0.85f));
+            addButton(left + buttonWidth + gap, row1, buttonWidth, buttonHeight, "→ 1 px", () -> xPosition = clamp(xPosition + 1.0f / this.width, 0.0f, 0.85f));
+            addButton(left + (buttonWidth + gap) * 2, row1, buttonWidth, buttonHeight, "↑ 1 px", () -> yPosition = clamp(yPosition - 1.0f / this.height, 0.0f, 0.75f));
+            addButton(left + (buttonWidth + gap) * 3, row1, buttonWidth, buttonHeight, "↓ 1 px", () -> yPosition = clamp(yPosition + 1.0f / this.height, 0.0f, 0.75f));
 
             addButton(left, row2, buttonWidth, buttonHeight, "Размер −", () -> sizeScale = clamp(sizeScale - 0.005f, 0.04f, 0.18f));
             addButton(left + buttonWidth + gap, row2, buttonWidth, buttonHeight, "Размер +", () -> sizeScale = clamp(sizeScale + 0.005f, 0.04f, 0.18f));
