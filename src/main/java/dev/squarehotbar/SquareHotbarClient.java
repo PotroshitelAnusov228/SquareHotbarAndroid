@@ -8,6 +8,12 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 public final class SquareHotbarClient implements ClientModInitializer {
 
     private static final int SIZE = 34;
@@ -18,9 +24,14 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static final int BUTTON_Y = Y + TOTAL + 10;
     private static final int BUTTON_HEIGHT = 24;
 
+    // TouchController receives real Android pointer coordinates through Zalith.
+    // Keep this integration reflective so SquareHotbar can still load without that mod.
+    private static final Set<Integer> ACTIVE_TOUCH_POINTERS = new HashSet<>();
+    private static Field touchStateModelField;
+
     @Override
     public void onInitializeClient() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> handleClick(client));
+        ClientTickEvents.END_CLIENT_TICK.register(SquareHotbarClient::handleMouseClick);
 
         HudElementRegistry.addLast(
             Identifier.of("squarehotbar", "hud"),
@@ -28,15 +39,81 @@ public final class SquareHotbarClient implements ClientModInitializer {
         );
     }
 
-    private static void handleClick(MinecraftClient client) {
+    private static void handleMouseClick(MinecraftClient client) {
         if (client.player == null || client.currentScreen != null) return;
         if (!client.mouse.wasLeftButtonClicked()) return;
 
         double mouseX = client.mouse.getScaledX(client.getWindow());
         double mouseY = client.mouse.getScaledY(client.getWindow());
+        handleTap(client, mouseX, mouseY);
+    }
 
-        if (mouseX >= X && mouseX <= X + TOTAL
-                && mouseY >= BUTTON_Y && mouseY <= BUTTON_Y + BUTTON_HEIGHT) {
+    private static void handleTouchControllerPointers(MinecraftClient client) {
+        try {
+            Class<?> renderEvents = Class.forName(
+                "top.fifthlight.touchcontroller.common.event.render.RenderEvents"
+            );
+
+            if (touchStateModelField == null) {
+                touchStateModelField = renderEvents.getDeclaredField("touchStateModel");
+                touchStateModelField.setAccessible(true);
+            }
+
+            Object touchStateModel = touchStateModelField.get(null);
+            Method getPointers = touchStateModel.getClass().getMethod("getPointers");
+            Object value = getPointers.invoke(touchStateModel);
+            if (!(value instanceof Map<?, ?> pointers)) return;
+
+            Set<Integer> seenPointers = new HashSet<>();
+
+            for (Map.Entry<?, ?> entry : pointers.entrySet()) {
+                if (!(entry.getKey() instanceof Integer pointerId)) continue;
+                Object pointer = entry.getValue();
+                if (pointer == null) continue;
+
+                Object state = pointer.getClass().getMethod("getState").invoke(pointer);
+                if (state != null && state.getClass().getSimpleName().equals("Released")) {
+                    ACTIVE_TOUCH_POINTERS.remove(pointerId);
+                    continue;
+                }
+
+                seenPointers.add(pointerId);
+                if (!ACTIVE_TOUCH_POINTERS.add(pointerId)) continue;
+
+                Object position = pointer.getClass().getMethod("getPosition").invoke(pointer);
+                double normalizedX = readCoordinate(position, "getX", "x");
+                double normalizedY = readCoordinate(position, "getY", "y");
+
+                double screenX = normalizedX * client.getWindow().getScaledWidth();
+                double screenY = normalizedY * client.getWindow().getScaledHeight();
+                handleTap(client, screenX, screenY);
+            }
+
+            ACTIVE_TOUCH_POINTERS.retainAll(seenPointers);
+        } catch (ClassNotFoundException ignored) {
+            // TouchController is optional. Mouse input remains available.
+        } catch (Throwable ignored) {
+            // Avoid breaking the HUD if TouchController changes its internal API.
+        }
+    }
+
+    private static double readCoordinate(Object object, String getterName, String fieldName)
+            throws ReflectiveOperationException {
+        try {
+            Object result = object.getClass().getMethod(getterName).invoke(object);
+            return ((Number) result).doubleValue();
+        } catch (NoSuchMethodException ignored) {
+            Field field = object.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return ((Number) field.get(object)).doubleValue();
+        }
+    }
+
+    private static void handleTap(MinecraftClient client, double x, double y) {
+        if (client.player == null || client.currentScreen != null) return;
+
+        if (x >= X && x <= X + TOTAL
+                && y >= BUTTON_Y && y <= BUTTON_Y + BUTTON_HEIGHT) {
             client.setScreen(new InventoryScreen(client.player));
             return;
         }
@@ -46,8 +123,8 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 int slotX = X + col * (SIZE + GAP);
                 int slotY = Y + row * (SIZE + GAP);
 
-                if (mouseX >= slotX && mouseX < slotX + SIZE
-                        && mouseY >= slotY && mouseY < slotY + SIZE) {
+                if (x >= slotX && x < slotX + SIZE
+                        && y >= slotY && y < slotY + SIZE) {
                     client.player.getInventory().setSelectedSlot(row * 3 + col);
                     return;
                 }
@@ -57,6 +134,11 @@ public final class SquareHotbarClient implements ClientModInitializer {
 
     private static void renderHud(MinecraftClient client, net.minecraft.client.gui.DrawContext graphics) {
         if (client.player == null) return;
+
+        // Read touch pointers during HUD rendering so short taps are not missed between ticks.
+        if (client.currentScreen == null) {
+            handleTouchControllerPointers(client);
+        }
 
         graphics.fill(
             X - 4, Y - 4,
