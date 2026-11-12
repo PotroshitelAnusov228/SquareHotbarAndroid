@@ -148,10 +148,19 @@ public final class SquareHotbarClient implements ClientModInitializer {
 
                 ItemStack stack = client.player.getInventory().getStack(slot);
                 if (!stack.isEmpty()) {
-                    int itemX = slotX + (size - 16) / 2;
-                    int itemY = slotY + (size - 16) / 2;
-                    graphics.drawItem(stack, itemX, itemY);
-                    graphics.drawStackOverlay(client.textRenderer, stack, itemX, itemY);
+                    // Vanilla hotbar proportions: a 16px item icon inside a 20px slot.
+                    // Scale the item and its overlays together so the icon fills 80% of our slot.
+                    float itemScale = size / 20.0f;
+                    float renderedItemSize = 16.0f * itemScale;
+                    float itemX = slotX + (size - renderedItemSize) / 2.0f;
+                    float itemY = slotY + (size - renderedItemSize) / 2.0f;
+
+                    graphics.getMatrices().push();
+                    graphics.getMatrices().translate(itemX, itemY, 0.0f);
+                    graphics.getMatrices().scale(itemScale, itemScale, 1.0f);
+                    graphics.drawItem(stack, 0, 0);
+                    graphics.drawStackOverlay(client.textRenderer, stack, 0, 0);
+                    graphics.getMatrices().pop();
                 }
             }
         }
