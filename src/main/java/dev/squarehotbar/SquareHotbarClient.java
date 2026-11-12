@@ -58,7 +58,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof HandledScreen<?> || screen instanceof CreativeInventoryScreen) {
                 ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) -> {
-                    if (client.player != null) {
+                    if (client.player != null && !client.getDebugHud().shouldShowDebugHud()) {
                         drawHotbarPanel(client, graphics);
                     }
                 });
@@ -69,7 +69,8 @@ public final class SquareHotbarClient implements ClientModInitializer {
             Identifier.of("squarehotbar", "hud"),
             (graphics, tickCounter) -> {
                 MinecraftClient client = MinecraftClient.getInstance();
-                if (client.player != null && client.currentScreen == null) {
+                if (client.player != null && client.currentScreen == null
+                    && !client.getDebugHud().shouldShowDebugHud()) {
                     drawHotbarPanel(client, graphics);
                 }
             }
