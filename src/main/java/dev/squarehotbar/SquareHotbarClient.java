@@ -53,11 +53,13 @@ public final class SquareHotbarClient implements ClientModInitializer {
             }
         });
 
-        ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof InventoryScreen) {
-                ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) ->
-                    drawHotbarPanel(client, graphics)
-                );
+                ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) -> {
+                    if (client.player != null) {
+                        drawHotbarPanel(client, graphics);
+                    }
+                });
             }
         });
 
