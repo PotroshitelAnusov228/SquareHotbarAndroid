@@ -85,9 +85,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 seenPointers.add(pointerId);
                 if (!ACTIVE_TOUCH_POINTERS.add(pointerId)) continue;
 
-                Object position = pointer.getClass().getMethod("getPosition").invoke(pointer);
-                double normalizedX = readCoordinate(position, "getX", "x");
-                double normalizedY = readCoordinate(position, "getY", "y");
+                long packedPosition = readPackedPosition(pointer);
+                double normalizedX = Float.intBitsToFloat((int) (packedPosition >>> 32));
+                double normalizedY = Float.intBitsToFloat((int) packedPosition);
 
                 double screenX = normalizedX * client.getWindow().getScaledWidth();
                 double screenY = normalizedY * client.getWindow().getScaledHeight();
@@ -102,16 +102,22 @@ public final class SquareHotbarClient implements ClientModInitializer {
         }
     }
 
-    private static double readCoordinate(Object object, String getterName, String fieldName)
-            throws ReflectiveOperationException {
-        try {
-            Object result = object.getClass().getMethod(getterName).invoke(object);
-            return ((Number) result).doubleValue();
-        } catch (NoSuchMethodException ignored) {
-            Field field = object.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return ((Number) field.get(object)).doubleValue();
+    private static long readPackedPosition(Object pointer) throws ReflectiveOperationException {
+        // Offset is a Kotlin value class backed by a packed Long. Its JVM getter
+        // is name-mangled, so looking up exactly "getPosition" does not work.
+        for (Method method : pointer.getClass().getDeclaredMethods()) {
+            if (method.getName().startsWith("getPosition")) {
+                method.setAccessible(true);
+                Object result = method.invoke(pointer);
+                if (result instanceof Number number) {
+                    return number.longValue();
+                }
+            }
         }
+
+        Field field = pointer.getClass().getDeclaredField("position");
+        field.setAccessible(true);
+        return ((Number) field.get(pointer)).longValue();
     }
 
     private static void handleTap(MinecraftClient client, double x, double y) {
