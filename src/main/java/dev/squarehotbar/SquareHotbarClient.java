@@ -56,8 +56,11 @@ public final class SquareHotbarClient implements ClientModInitializer {
             }
         });
 
+        // Draw over every active screen as well, including special overlays/menus
+        // such as the sleep view and the F3+F4 game-mode switcher.
+        // The config screen draws its own preview, so exclude it to avoid double rendering.
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if (screen instanceof HandledScreen<?> || screen instanceof CreativeInventoryScreen) {
+            if (!(screen instanceof HotbarConfigScreen)) {
                 ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) -> {
                     if (client.player != null) {
                         drawHotbarPanel(client, graphics);
