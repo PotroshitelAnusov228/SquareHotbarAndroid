@@ -125,10 +125,8 @@ public final class SquareHotbarClient implements ClientModInitializer {
         int y = Math.round(screenHeight * yPosition);
         int total = size * 3 + gap * 2;
 
-        // Vanilla-style translucent panel behind the nine slots.
-        graphics.fill(x - 3, y - 3, x + total + 3, y + total + 3, 0xAA000000);
         int selectedSlot = client.player.getInventory().getSelectedSlot();
-        Identifier slotTexture = Identifier.ofVanilla("container/slot");
+        Identifier hotbarTexture = Identifier.ofVanilla("hud/hotbar");
         Identifier selectionTexture = Identifier.ofVanilla("hud/hotbar_selection");
 
         for (int row = 0; row < 3; row++) {
@@ -136,8 +134,13 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 int slot = row * 3 + col;
                 int slotX = x + col * (size + gap);
                 int slotY = y + row * (size + gap);
-                // Reuse Minecraft's original inventory slot sprite, scaled to our square layout.
-                graphics.drawGuiTexture(RenderPipelines.GUI_TEXTURED, slotTexture, slotX, slotY, size, size);
+                // Crop one cell from the original 182x22 vanilla hotbar texture.
+                // Each cell is 20x20, starting at x=1 with a 20px pitch.
+                graphics.drawGuiTexture(
+                    RenderPipelines.GUI_TEXTURED, hotbarTexture,
+                    182, 22, 1 + col * 20, 1,
+                    slotX, slotY, size, size
+                );
                 if (slot == selectedSlot) {
                     // Use the exact vanilla hotbar selection frame instead of a custom-colored border.
                     graphics.drawGuiTexture(RenderPipelines.GUI_TEXTURED, selectionTexture, slotX - 4, slotY - 4, size + 8, size + 8);
