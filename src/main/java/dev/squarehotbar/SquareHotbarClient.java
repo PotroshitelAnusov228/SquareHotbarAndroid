@@ -155,12 +155,12 @@ public final class SquareHotbarClient implements ClientModInitializer {
                     float itemX = slotX + (size - renderedItemSize) / 2.0f;
                     float itemY = slotY + (size - renderedItemSize) / 2.0f;
 
-                    graphics.getMatrices().push();
-                    graphics.getMatrices().translate(itemX, itemY, 0.0f);
-                    graphics.getMatrices().scale(itemScale, itemScale, 1.0f);
+                    graphics.getMatrices().pushMatrix();
+                    graphics.getMatrices().translate(itemX, itemY);
+                    graphics.getMatrices().scale(itemScale, itemScale);
                     graphics.drawItem(stack, 0, 0);
                     graphics.drawStackOverlay(client.textRenderer, stack, 0, 0);
-                    graphics.getMatrices().pop();
+                    graphics.getMatrices().popMatrix();
                 }
             }
         }
