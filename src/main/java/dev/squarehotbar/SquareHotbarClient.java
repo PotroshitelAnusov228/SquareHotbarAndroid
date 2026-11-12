@@ -138,7 +138,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 // Each cell is 20x20, starting at x=1 with a 20px pitch.
                 graphics.drawGuiTexture(
                     RenderPipelines.GUI_TEXTURED, hotbarTexture,
-                    182, 22, 1 + col * 20, 1,
+                    182, 22, 1 + col * 20, 1, 20, 20,
                     slotX, slotY, size, size
                 );
                 if (slot == selectedSlot) {
