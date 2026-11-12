@@ -4,10 +4,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.lang.reflect.Field;
@@ -33,14 +34,11 @@ public final class SquareHotbarClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(SquareHotbarClient::handleMouseClick);
-
         HudElementRegistry.addLast(
             Identifier.of("squarehotbar", "hud"),
             (graphics, tickCounter) -> renderHud(MinecraftClient.getInstance(), graphics)
         );
-
     }
-
 
     private static final class CloseableInventoryScreen extends InventoryScreen {
         private CloseableInventoryScreen(net.minecraft.entity.player.PlayerEntity player) {
@@ -48,20 +46,58 @@ public final class SquareHotbarClient implements ClientModInitializer {
         }
 
         @Override
-        protected void init() {
-            super.init();
-            addDrawableChild(
-                ButtonWidget.builder(Text.literal("CLOSE"), button -> MinecraftClient.getInstance().setScreen(null))
-                    .dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT)
-                    .build()
-            );
+        public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+            super.render(context, mouseX, mouseY, delta);
+            MinecraftClient client = MinecraftClient.getInstance();
+            handleTouchControllerPointers(client);
+            drawHotbarPanel(client, context, true);
         }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (button == 0 && handleOverlayTap(MinecraftClient.getInstance(), mouseX, mouseY)) {
+                return true;
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        private boolean handleOverlayTap(MinecraftClient client, double mouseX, double mouseY) {
+            if (mouseX >= X && mouseX <= X + TOTAL
+                    && mouseY >= BUTTON_Y && mouseY <= BUTTON_Y + BUTTON_HEIGHT) {
+                client.setScreen(null);
+                return true;
+            }
+
+            for (int row = 0; row < 3; row++) {
+                for (int col = 0; col < 3; col++) {
+                    int slotX = X + col * (SIZE + GAP);
+                    int slotY = Y + row * (SIZE + GAP);
+                    if (mouseX >= slotX && mouseX < slotX + SIZE
+                            && mouseY >= slotY && mouseY < slotY + SIZE) {
+                        clickHotbarInventorySlot(client, row * 3 + col);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+
+    private static void clickHotbarInventorySlot(MinecraftClient client, int hotbarIndex) {
+        if (client.player == null || client.interactionManager == null) return;
+        // Player inventory hotbar slots are 36-44 in the standard inventory screen handler.
+        client.interactionManager.clickSlot(
+            client.player.currentScreenHandler.syncId,
+            36 + hotbarIndex,
+            0,
+            SlotActionType.PICKUP,
+            client.player
+        );
     }
 
     private static void handleMouseClick(MinecraftClient client) {
         if (client.player == null || client.currentScreen != null) return;
         if (!client.mouse.wasLeftButtonClicked()) return;
-
         double mouseX = client.mouse.getScaledX(client.getWindow());
         double mouseY = client.mouse.getScaledY(client.getWindow());
         handleTap(client, mouseX, mouseY);
@@ -90,7 +126,6 @@ public final class SquareHotbarClient implements ClientModInitializer {
             if (!(value instanceof Map<?, ?> pointers)) return;
 
             Set<Integer> seenPointers = new HashSet<>();
-
             for (Map.Entry<?, ?> entry : pointers.entrySet()) {
                 if (!(entry.getKey() instanceof Integer pointerId)) continue;
                 Object pointer = entry.getValue();
@@ -108,12 +143,10 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 long packedPosition = readPackedPosition(pointer);
                 double normalizedX = Float.intBitsToFloat((int) (packedPosition >>> 32));
                 double normalizedY = Float.intBitsToFloat((int) packedPosition);
-
                 double screenX = normalizedX * client.getWindow().getScaledWidth();
                 double screenY = normalizedY * client.getWindow().getScaledHeight();
                 handleTap(client, screenX, screenY);
             }
-
             ACTIVE_TOUCH_POINTERS.retainAll(seenPointers);
         } catch (ClassNotFoundException ignored) {
             // TouchController is optional. Mouse input remains available.
@@ -123,28 +156,28 @@ public final class SquareHotbarClient implements ClientModInitializer {
     }
 
     private static long readPackedPosition(Object pointer) throws ReflectiveOperationException {
-        // Offset is a Kotlin value class backed by a packed Long. Its JVM getter
-        // is name-mangled, so looking up exactly "getPosition" does not work.
         for (Method method : pointer.getClass().getDeclaredMethods()) {
             if (method.getName().startsWith("getPosition")) {
                 method.setAccessible(true);
                 Object result = method.invoke(pointer);
-                if (result instanceof Number number) {
-                    return number.longValue();
-                }
+                if (result instanceof Number number) return number.longValue();
             }
         }
-
         Field field = pointer.getClass().getDeclaredField("position");
         field.setAccessible(true);
         return ((Number) field.get(pointer)).longValue();
     }
 
     private static void handleTap(MinecraftClient client, double x, double y) {
-        if (client.player == null || client.currentScreen != null) return;
+        if (client.player == null) return;
 
-        if (x >= X && x <= X + TOTAL
-                && y >= BUTTON_Y && y <= BUTTON_Y + BUTTON_HEIGHT) {
+        if (client.currentScreen instanceof CloseableInventoryScreen inventoryScreen) {
+            inventoryScreen.handleOverlayTap(client, x, y);
+            return;
+        }
+        if (client.currentScreen != null) return;
+
+        if (x >= X && x <= X + TOTAL && y >= BUTTON_Y && y <= BUTTON_Y + BUTTON_HEIGHT) {
             client.setScreen(new CloseableInventoryScreen(client.player));
             return;
         }
@@ -153,9 +186,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
             for (int col = 0; col < 3; col++) {
                 int slotX = X + col * (SIZE + GAP);
                 int slotY = Y + row * (SIZE + GAP);
-
-                if (x >= slotX && x < slotX + SIZE
-                        && y >= slotY && y < slotY + SIZE) {
+                if (x >= slotX && x < slotX + SIZE && y >= slotY && y < slotY + SIZE) {
                     client.player.getInventory().setSelectedSlot(row * 3 + col);
                     return;
                 }
@@ -163,19 +194,14 @@ public final class SquareHotbarClient implements ClientModInitializer {
         }
     }
 
-    private static void renderHud(MinecraftClient client, net.minecraft.client.gui.DrawContext graphics) {
+    private static void renderHud(MinecraftClient client, DrawContext graphics) {
         if (client.player == null) return;
+        if (client.currentScreen == null) handleTouchControllerPointers(client);
+        if (client.currentScreen == null) drawHotbarPanel(client, graphics, false);
+    }
 
-        if (client.currentScreen == null) {
-            handleTouchControllerPointers(client);
-        }
-
-        graphics.fill(
-            X - 4, Y - 4,
-            X + TOTAL + 4, Y + TOTAL + 4,
-            0xAA151515
-        );
-
+    private static void drawHotbarPanel(MinecraftClient client, DrawContext graphics, boolean inventoryOpen) {
+        graphics.fill(X - 4, Y - 4, X + TOTAL + 4, Y + TOTAL + 4, 0xAA151515);
         int selectedSlot = client.player.getInventory().getSelectedSlot();
 
         for (int row = 0; row < 3; row++) {
@@ -183,19 +209,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 int slot = row * 3 + col;
                 int slotX = X + col * (SIZE + GAP);
                 int slotY = Y + row * (SIZE + GAP);
-
                 int borderColor = slot == selectedSlot ? 0xFFFFC857 : 0xFF555555;
-                graphics.fill(
-                    slotX, slotY,
-                    slotX + SIZE, slotY + SIZE,
-                    borderColor
-                );
-
-                graphics.fill(
-                    slotX + 2, slotY + 2,
-                    slotX + SIZE - 2, slotY + SIZE - 2,
-                    0xFF252525
-                );
+                graphics.fill(slotX, slotY, slotX + SIZE, slotY + SIZE, borderColor);
+                graphics.fill(slotX + 2, slotY + 2, slotX + SIZE - 2, slotY + SIZE - 2, 0xFF252525);
 
                 ItemStack stack = client.player.getInventory().getStack(slot);
                 if (!stack.isEmpty()) {
@@ -211,7 +227,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         graphics.fill(X + 2, BUTTON_Y + 2, X + TOTAL - 2, BUTTON_Y + BUTTON_HEIGHT - 2, 0xFF252525);
         graphics.drawText(
             client.textRenderer,
-            "INVENTORY",
+            inventoryOpen ? "CLOSE" : "INVENTORY",
             X + 8,
             BUTTON_Y + 8,
             0xFFFFFFFF,
