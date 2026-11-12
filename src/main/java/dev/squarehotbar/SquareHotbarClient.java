@@ -1,6 +1,6 @@
 package dev.squarehotbar;
 
-import com.mojang.blaze3d.platform.InputUtil;
+import net.minecraft.client.util.InputUtil;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -37,7 +37,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
     public void onInitializeClient() {
         loadConfig();
 
-        KeyBinding.Category category = KeyBinding.Category.register(Identifier.of("squarehotbar", "general"));
+        KeyBinding.Category category = KeyBinding.Category.create(Identifier.of("squarehotbar", "general"));
         configureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.squarehotbar.configure",
             InputUtil.Type.KEYSYM,
@@ -46,7 +46,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (configureKey.consumeClick()) {
+            while (configureKey.wasPressed()) {
                 if (client.player != null && client.currentScreen == null) {
                     client.setScreen(new HotbarConfigScreen());
                 }
