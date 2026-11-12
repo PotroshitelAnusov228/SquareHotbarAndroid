@@ -38,11 +38,15 @@ public final class SquareHotbarClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         ClientTickEvents.END_CLIENT_TICK.register(SquareHotbarClient::handleMouseClick);
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+        ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof InventoryScreen) {
                 ScreenEvents.afterRender(screen).register((renderedScreen, graphics, mouseX, mouseY, delta) ->
                     drawHotbarPanel(client, graphics, true)
                 );
+            }
+        });
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof InventoryScreen) {
                 Screens.getButtons(screen).add(
                     ButtonWidget.builder(Text.literal("CLOSE"), button -> client.setScreen(null))
                         .dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT)
@@ -50,7 +54,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 );
             }
         });
-        HudElementRegistry.addLast(
+        HudElementRegistry.addFirst(
             Identifier.of("squarehotbar", "hud"),
             (graphics, tickCounter) -> renderHud(MinecraftClient.getInstance(), graphics)
         );
