@@ -6,8 +6,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -46,19 +46,21 @@ public final class SquareHotbarClient implements ClientModInitializer {
         }
 
         @Override
+        protected void init() {
+            super.init();
+            this.addDrawableChild(
+                ButtonWidget.builder(Text.literal("CLOSE"), button ->
+                    MinecraftClient.getInstance().setScreen(null)
+                ).dimensions(X, BUTTON_Y, TOTAL, BUTTON_HEIGHT).build()
+            );
+        }
+
+        @Override
         public void render(DrawContext context, int mouseX, int mouseY, float delta) {
             super.render(context, mouseX, mouseY, delta);
             MinecraftClient client = MinecraftClient.getInstance();
             handleTouchControllerPointers(client);
             drawHotbarPanel(client, context, true);
-        }
-
-        @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button == 0 && handleOverlayTap(MinecraftClient.getInstance(), mouseX, mouseY)) {
-                return true;
-            }
-            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         private boolean handleOverlayTap(MinecraftClient client, double mouseX, double mouseY) {
@@ -67,32 +69,8 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 client.setScreen(null);
                 return true;
             }
-
-            for (int row = 0; row < 3; row++) {
-                for (int col = 0; col < 3; col++) {
-                    int slotX = X + col * (SIZE + GAP);
-                    int slotY = Y + row * (SIZE + GAP);
-                    if (mouseX >= slotX && mouseX < slotX + SIZE
-                            && mouseY >= slotY && mouseY < slotY + SIZE) {
-                        clickHotbarInventorySlot(client, row * 3 + col);
-                        return true;
-                    }
-                }
-            }
             return false;
         }
-    }
-
-    private static void clickHotbarInventorySlot(MinecraftClient client, int hotbarIndex) {
-        if (client.player == null || client.interactionManager == null) return;
-        // Player inventory hotbar slots are 36-44 in the standard inventory screen handler.
-        client.interactionManager.clickSlot(
-            client.player.currentScreenHandler.syncId,
-            36 + hotbarIndex,
-            0,
-            SlotActionType.PICKUP,
-            client.player
-        );
     }
 
     private static void handleMouseClick(MinecraftClient client) {
@@ -223,15 +201,17 @@ public final class SquareHotbarClient implements ClientModInitializer {
             }
         }
 
-        graphics.fill(X, BUTTON_Y, X + TOTAL, BUTTON_Y + BUTTON_HEIGHT, 0xFF555555);
-        graphics.fill(X + 2, BUTTON_Y + 2, X + TOTAL - 2, BUTTON_Y + BUTTON_HEIGHT - 2, 0xFF252525);
-        graphics.drawText(
-            client.textRenderer,
-            inventoryOpen ? "CLOSE" : "INVENTORY",
-            X + 8,
-            BUTTON_Y + 8,
-            0xFFFFFFFF,
-            true
-        );
+        if (!inventoryOpen) {
+            graphics.fill(X, BUTTON_Y, X + TOTAL, BUTTON_Y + BUTTON_HEIGHT, 0xFF555555);
+            graphics.fill(X + 2, BUTTON_Y + 2, X + TOTAL - 2, BUTTON_Y + BUTTON_HEIGHT - 2, 0xFF252525);
+            graphics.drawText(
+                client.textRenderer,
+                "INVENTORY",
+                X + 8,
+                BUTTON_Y + 8,
+                0xFFFFFFFF,
+                true
+            );
+        }
     }
 }
