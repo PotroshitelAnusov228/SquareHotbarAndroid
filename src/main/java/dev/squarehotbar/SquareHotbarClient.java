@@ -67,7 +67,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         });
 
         HudElementRegistry.attachElementBefore(
-            VanillaHudElements.DEBUG,
+            VanillaHudElements.CHAT,
             Identifier.of("squarehotbar", "hud"),
             (graphics, tickCounter) -> {
                 MinecraftClient client = MinecraftClient.getInstance();
