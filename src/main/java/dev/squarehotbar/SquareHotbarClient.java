@@ -99,14 +99,14 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 }
 
                 seenPointers.add(pointerId);
-                if (!ACTIVE_TOUCH_POINTERS.add(pointerId)) continue;
-
                 long packedPosition = readPackedPosition(pointer);
                 double normalizedX = Float.intBitsToFloat((int) (packedPosition >>> 32));
                 double normalizedY = Float.intBitsToFloat((int) packedPosition);
                 double screenX = normalizedX * client.getWindow().getScaledWidth();
                 double screenY = normalizedY * client.getWindow().getScaledHeight();
-                handleTap(client, screenX, screenY);
+                if (ACTIVE_TOUCH_POINTERS.add(pointerId)) {
+                    handleTap(client, screenX, screenY);
+                }
                 if (isInsideTouchProtectedArea(screenX, screenY)) {
                     suppressTouchControllerView(pointer);
                 }
