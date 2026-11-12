@@ -136,10 +136,10 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 int slotY = y + row * (size + gap);
                 // Crop one cell from the original 182x22 vanilla hotbar texture.
                 // Each cell is 20x20, starting at x=1 with a 20px pitch.
-                graphics.drawGuiTexture(
+                graphics.drawTexture(
                     RenderPipelines.GUI_TEXTURED, hotbarTexture,
-                    182, 22, 1 + col * 20, 1, 20, 20,
-                    slotX, slotY, size, size
+                    slotX, slotY, 1.0f + col * 20, 1.0f,
+                    size, size, 20, 20, 182, 22
                 );
                 if (slot == selectedSlot) {
                     // Use the exact vanilla hotbar selection frame instead of a custom-colored border.
