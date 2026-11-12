@@ -24,10 +24,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static final int BUTTON_Y = Y + TOTAL + 10;
     private static final int BUTTON_HEIGHT = 24;
 
-    // TouchController receives real Android pointer coordinates through Zalith.
-    // Keep this integration reflective so SquareHotbar can still load without that mod.
     private static final Set<Integer> ACTIVE_TOUCH_POINTERS = new HashSet<>();
     private static Field touchStateModelField;
+    private static Object renderEventsInstance;
 
     @Override
     public void onInitializeClient() {
@@ -54,12 +53,18 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 "top.fifthlight.touchcontroller.common.event.render.RenderEvents"
             );
 
+            if (renderEventsInstance == null) {
+                Field instanceField = renderEvents.getDeclaredField("INSTANCE");
+                instanceField.setAccessible(true);
+                renderEventsInstance = instanceField.get(null);
+            }
+
             if (touchStateModelField == null) {
                 touchStateModelField = renderEvents.getDeclaredField("touchStateModel");
                 touchStateModelField.setAccessible(true);
             }
 
-            Object touchStateModel = touchStateModelField.get(null);
+            Object touchStateModel = touchStateModelField.get(renderEventsInstance);
             Method getPointers = touchStateModel.getClass().getMethod("getPointers");
             Object value = getPointers.invoke(touchStateModel);
             if (!(value instanceof Map<?, ?> pointers)) return;
@@ -135,7 +140,6 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static void renderHud(MinecraftClient client, net.minecraft.client.gui.DrawContext graphics) {
         if (client.player == null) return;
 
-        // Read touch pointers during HUD rendering so short taps are not missed between ticks.
         if (client.currentScreen == null) {
             handleTouchControllerPointers(client);
         }
