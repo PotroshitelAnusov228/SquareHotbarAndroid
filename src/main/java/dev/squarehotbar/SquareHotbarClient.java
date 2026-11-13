@@ -151,7 +151,15 @@ public final class SquareHotbarClient implements ClientModInitializer {
             }
         }
 
-        // Pass 2: draw the selected-slot frame over all backgrounds.
+        // Draw one shared black frame around the complete 3x3 panel,
+        // rather than repeating a black outline around every individual slot.
+        int frame = 2;
+        graphics.fill(x - frame, y - frame, x + total + frame, y, 0xFF000000);
+        graphics.fill(x - frame, y + total, x + total + frame, y + total + frame, 0xFF000000);
+        graphics.fill(x - frame, y, x, y + total, 0xFF000000);
+        graphics.fill(x + total, y, x + total + frame, y + total, 0xFF000000);
+
+        // Pass 2: keep the selected-slot outline close to the slot bounds.
         int selectedCol = selectedSlot % 3;
         int selectedRow = selectedSlot / 3;
         int selectedX = x + selectedCol * total / 3;
@@ -160,7 +168,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         int selectedHeight = y + (selectedRow + 1) * total / 3 - selectedY;
         graphics.drawGuiTexture(
             RenderPipelines.GUI_TEXTURED, selectionTexture,
-            selectedX - 4, selectedY - 4, selectedWidth + 8, selectedHeight + 8
+            selectedX - 2, selectedY - 2, selectedWidth + 4, selectedHeight + 4
         );
 
         // Pass 3: draw item icons and overlays above the slot frame.
