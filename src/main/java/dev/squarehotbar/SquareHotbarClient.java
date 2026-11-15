@@ -82,9 +82,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
         if (client.player == null) return;
         int sw = client.getWindow().getScaledWidth(), sh = client.getWindow().getScaledHeight();
         int size = Math.max(24, Math.round(sh * sizeScale));
-        int gap = Math.max(1, Math.round(size * 0.067f));
+        int gap = 0;
         int cellW = size;
-        int cellH = Math.round(size * 1.15f);
+        int cellH = size;
         int totalW = cellW * 3 + gap * 2;
         int totalH = cellH * 3 + gap * 2;
         int x = Math.round(sw * xPosition), y = Math.round(sh * yPosition);
