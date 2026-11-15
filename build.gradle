@@ -1,33 +1,16 @@
-plugins {
-    id 'net.fabricmc.fabric-loom-remap' version '1.14.10'
-}
-
+plugins { id 'fabric-loom' version '0.5-SNAPSHOT' }
 version = '0.1.0'
 group = 'dev.squarehotbar'
-
-base {
-    archivesName = 'SquareHotbar'
-}
-
-repositories {
-    mavenCentral()
-}
-
+archivesBaseName = 'SquareHotbar'
+repositories { mavenCentral() }
 dependencies {
-    minecraft 'com.mojang:minecraft:1.21.11'
-    mappings 'net.fabricmc:yarn:1.21.11+build.1:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.18.1'
-    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.141.6+1.21.11'
+    minecraft 'com.mojang:minecraft:1.16.1'
+    mappings 'net.fabricmc:yarn:1.16.1+build.21:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.11.7'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.16.2+build.385-1.16.1'
 }
-
 processResources {
     inputs.property 'version', project.version
-
-    filesMatching('fabric.mod.json') {
-        expand 'version': project.version
-    }
+    filesMatching('fabric.mod.json') { expand 'version': project.version }
 }
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 8 }
