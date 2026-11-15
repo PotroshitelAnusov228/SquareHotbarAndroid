@@ -1,7 +1,7 @@
 name: Build SquareHotbar
 on:
   push:
-    branches: [main]
+    branches: [main, mc-1.16.1]
   workflow_dispatch:
 jobs:
   build:
