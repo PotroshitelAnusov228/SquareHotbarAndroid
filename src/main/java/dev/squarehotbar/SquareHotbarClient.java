@@ -82,40 +82,42 @@ public final class SquareHotbarClient implements ClientModInitializer {
         if (client.player == null) return;
         int sw = client.getWindow().getScaledWidth(), sh = client.getWindow().getScaledHeight();
         int size = Math.max(24, Math.round(sh * sizeScale));
-        int total = size * 3 + Math.max(1, Math.round(size * 0.067f)) * 2;
+        int gap = Math.max(1, Math.round(size * 0.067f));
+        int cellW = size;
+        int cellH = Math.round(size * 1.15f);
+        int totalW = cellW * 3 + gap * 2;
+        int totalH = cellH * 3 + gap * 2;
         int x = Math.round(sw * xPosition), y = Math.round(sh * yPosition);
         int selected = client.player.inventory.selectedSlot;
 
         client.getTextureManager().bindTexture(SLOT_TEXTURE);
         for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++) {
-            int sx = x + col * total / 3, sy = y + row * total / 3;
-            int w = x + (col + 1) * total / 3 - sx, h = y + (row + 1) * total / 3 - sy;
+            int sx = x + col * (cellW + gap), sy = y + row * (cellH + gap);
             matrices.push();
             matrices.translate(sx, sy, 0.0);
-            matrices.scale(w / 22.0f, h / 22.0f, 1.0f);
+            matrices.scale(cellW / 22.0f, cellH / 22.0f, 1.0f);
             DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 0.0f, 22, 22, 22, 22);
             matrices.pop();
         }
 
         int col = selected % 3, row = selected / 3;
-        int sx = x + col * total / 3, sy = y + row * total / 3;
-        int w = x + (col + 1) * total / 3 - sx, h = y + (row + 1) * total / 3 - sy;
+        int sx = x + col * (cellW + gap), sy = y + row * (cellH + gap);
         client.getTextureManager().bindTexture(WIDGETS_TEXTURE);
         matrices.push();
         matrices.translate(sx - 4, sy - 4, 0.0);
-        matrices.scale((w + 8) / 22.0f, (h + 8) / 22.0f, 1.0f);
-        DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 22.0f, 22, 22, 256, 256);
+        matrices.scale((cellW + 8) / 24.0f, (cellH + 8) / 22.0f, 1.0f);
+        // Vanilla 1.16.1 hotbar selection frame is a 24x22 region at (0, 22).
+        DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 22.0f, 24, 22, 256, 256);
         matrices.pop();
 
         for (row = 0; row < 3; row++) for (col = 0; col < 3; col++) {
             int slot = row * 3 + col;
-            sx = x + col * total / 3; sy = y + row * total / 3;
-            w = x + (col + 1) * total / 3 - sx; h = y + (row + 1) * total / 3 - sy;
+            sx = x + col * (cellW + gap); sy = y + row * (cellH + gap);
             ItemStack stack = client.player.inventory.getStack(slot);
             if (!stack.isEmpty()) {
-                float scale = Math.min(w, h) / 20.0f;
+                float scale = Math.min(cellW, cellH) / 20.0f;
                 float rendered = 16.0f * scale;
-                float ix = sx + (w - rendered) / 2.0f, iy = sy + (h - rendered) / 2.0f;
+                float ix = sx + (cellW - rendered) / 2.0f, iy = sy + (cellH - rendered) / 2.0f;
                 RenderSystem.pushMatrix();
                 RenderSystem.translatef(ix, iy, 0.0f);
                 RenderSystem.scalef(scale, scale, 1.0f);
