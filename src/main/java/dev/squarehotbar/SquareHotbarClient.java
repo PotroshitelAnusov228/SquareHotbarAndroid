@@ -90,7 +90,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++) {
             int sx = x + col * total / 3, sy = y + row * total / 3;
             int w = x + (col + 1) * total / 3 - sx, h = y + (row + 1) * total / 3 - sy;
-            DrawableHelper.blit(matrices, sx, sy, 0, 0.0f, 0.0f, w, h, 22, 22);
+            DrawableHelper.drawTexture(matrices, sx, sy, 0, 0.0f, 0.0f, w, h, 22, 22);
         }
 
         int col = selected % 3, row = selected / 3;
@@ -142,6 +142,6 @@ public final class SquareHotbarClient implements ClientModInitializer {
             drawHotbarPanel(MinecraftClient.getInstance(), matrices);
             super.render(matrices, mouseX, mouseY, delta);
         }
-        @Override public void close() { MinecraftClient.getInstance().openScreen(null); }
+        @Override public void onClose() { MinecraftClient.getInstance().openScreen(null); }
     }
 }
