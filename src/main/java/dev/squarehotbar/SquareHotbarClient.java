@@ -90,14 +90,22 @@ public final class SquareHotbarClient implements ClientModInitializer {
         for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++) {
             int sx = x + col * total / 3, sy = y + row * total / 3;
             int w = x + (col + 1) * total / 3 - sx, h = y + (row + 1) * total / 3 - sy;
-            DrawableHelper.drawTexture(matrices, sx, sy, 0, 0.0f, 0.0f, w, h, 22, 22);
+            matrices.push();
+            matrices.translate(sx, sy, 0.0);
+            matrices.scale(w / 22.0f, h / 22.0f, 1.0f);
+            DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 0.0f, 22, 22, 22, 22);
+            matrices.pop();
         }
 
         int col = selected % 3, row = selected / 3;
         int sx = x + col * total / 3, sy = y + row * total / 3;
         int w = x + (col + 1) * total / 3 - sx, h = y + (row + 1) * total / 3 - sy;
         client.getTextureManager().bindTexture(WIDGETS_TEXTURE);
-        DrawableHelper.drawTexture(matrices, sx - 4, sy - 4, 0, 0.0f, 22.0f, w + 8, h + 8, 256, 256);
+        matrices.push();
+        matrices.translate(sx - 4, sy - 4, 0.0);
+        matrices.scale((w + 8) / 22.0f, (h + 8) / 22.0f, 1.0f);
+        DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 22.0f, 22, 22, 256, 256);
+        matrices.pop();
 
         for (row = 0; row < 3; row++) for (col = 0; col < 3; col++) {
             int slot = row * 3 + col;
