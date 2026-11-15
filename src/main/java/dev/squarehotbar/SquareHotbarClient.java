@@ -97,7 +97,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         int sx = x + col * total / 3, sy = y + row * total / 3;
         int w = x + (col + 1) * total / 3 - sx, h = y + (row + 1) * total / 3 - sy;
         client.getTextureManager().bindTexture(WIDGETS_TEXTURE);
-        DrawableHelper.blit(matrices, sx - 4, sy - 4, 0, 0.0f, 22.0f, w + 8, h + 8, 256, 256);
+        DrawableHelper.drawTexture(matrices, sx - 4, sy - 4, 0, 0.0f, 22.0f, w + 8, h + 8, 256, 256);
 
         for (row = 0; row < 3; row++) for (col = 0; col < 3; col++) {
             int slot = row * 3 + col;
@@ -130,7 +130,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
             addConfigButton(left, row2, bw, bh, "Размер −", () -> sizeScale = clamp(sizeScale - 0.005f, 0.04f, 0.18f));
             addConfigButton(left + bw + gap, row2, bw, bh, "Размер +", () -> sizeScale = clamp(sizeScale + 0.005f, 0.04f, 0.18f));
             addConfigButton(left + (bw + gap) * 2, row2, bw, bh, "Сброс", () -> { xPosition = 0.195f; yPosition = 0.174f; sizeScale = 0.087f; });
-            addConfigButton(left + (bw + gap) * 3, row2, bw, bh, "Готово", () -> { saveConfig(); close(); });
+            addConfigButton(left + (bw + gap) * 3, row2, bw, bh, "Готово", () -> { saveConfig(); MinecraftClient.getInstance().openScreen(null); });
         }
         private void addConfigButton(int x, int y, int w, int h, String label, Runnable action) {
             addButton(new ButtonWidget(x, y, w, h, new LiteralText(label), button -> action.run()));
