@@ -11,13 +11,14 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 8
+          java-version: 17
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 6.9.4
+          gradle-version: 7.3.3
       - name: Build mod
         run: gradle build --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: SquareHotbar-1.16.1
           path: build/libs/*.jar
+          if-no-files-found: error

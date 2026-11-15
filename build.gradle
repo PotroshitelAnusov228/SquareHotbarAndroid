@@ -1,4 +1,4 @@
-plugins { id 'fabric-loom' version '0.5-SNAPSHOT' }
+plugins { id 'fabric-loom' version '0.10.68' }
 version = '0.1.0'
 group = 'dev.squarehotbar'
 archivesBaseName = 'SquareHotbar'
@@ -13,4 +13,7 @@ processResources {
     inputs.property 'version', project.version
     filesMatching('fabric.mod.json') { expand 'version': project.version }
 }
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 8 }
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 8
+}
