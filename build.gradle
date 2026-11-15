@@ -1,4 +1,4 @@
-plugins { id 'fabric-loom' version '0.10.68' }
+plugins { id 'fabric-loom' version '0.10.66' }
 version = '0.1.0'
 group = 'dev.squarehotbar'
 archivesBaseName = 'SquareHotbar'
