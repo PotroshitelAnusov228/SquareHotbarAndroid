@@ -1,20 +1,15 @@
 package dev.squarehotbar;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,8 +19,6 @@ import java.util.Properties;
 
 public final class SquareHotbarClient implements ClientModInitializer {
     private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("squarehotbar.properties");
-    private static final Identifier SLOT_TEXTURE = new Identifier("squarehotbar", "textures/gui/slot.png");
-    private static final Identifier WIDGETS_TEXTURE = new Identifier("minecraft", "textures/gui/widgets.png");
     private static float xPosition = 0.195f, yPosition = 0.174f, sizeScale = 0.087f;
     private static KeyBinding configureKey;
 
@@ -41,15 +34,11 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 if (client.player != null && client.currentScreen == null) client.openScreen(new HotbarConfigScreen());
             }
         });
-        HudRenderCallback.EVENT.register((matrices, tickDelta) -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.player != null && client.currentScreen == null) drawHotbarPanel(client, matrices);
-        });
+        // Diagnostic build: HUD render callback intentionally disabled to isolate startup.
     }
 
     public static void renderOnScreen(Screen screen, MatrixStack matrices) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player != null && !(screen instanceof HotbarConfigScreen)) drawHotbarPanel(client, matrices);
+        // Rendering is disabled in this diagnostic build.
     }
 
     private static void loadConfig() {
@@ -78,64 +67,6 @@ public final class SquareHotbarClient implements ClientModInitializer {
     }
     private static float clamp(float v, float min, float max) { return Math.max(min, Math.min(max, v)); }
 
-    private static void drawHotbarPanel(MinecraftClient client, MatrixStack matrices) {
-        if (client.player == null) return;
-        int sw = client.getWindow().getScaledWidth(), sh = client.getWindow().getScaledHeight();
-        int size = Math.max(24, Math.round(sh * sizeScale));
-        int gap = 0;
-        int cellW = size;
-        int cellH = size;
-        int totalW = cellW * 3 + gap * 2;
-        int totalH = cellH * 3 + gap * 2;
-        int x = Math.round(sw * xPosition), y = Math.round(sh * yPosition);
-        int selected = client.player.inventory.selectedSlot;
-
-        client.getTextureManager().bindTexture(SLOT_TEXTURE);
-        for (int row = 0; row < 3; row++) for (int col = 0; col < 3; col++) {
-            int sx = x + col * (cellW + gap), sy = y + row * (cellH + gap);
-            matrices.push();
-            matrices.translate(sx, sy, 0.0);
-            matrices.scale(cellW / 22.0f, cellH / 22.0f, 1.0f);
-            DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 0.0f, 22, 22, 22, 22);
-            matrices.pop();
-        }
-
-        int col = selected % 3, row = selected / 3;
-        int sx = x + col * (cellW + gap), sy = y + row * (cellH + gap);
-        client.getTextureManager().bindTexture(WIDGETS_TEXTURE);
-        matrices.push();
-        matrices.translate(sx - 4, sy - 4, 0.0);
-        matrices.scale((cellW + 8) / 24.0f, (cellH + 8) / 22.0f, 1.0f);
-        // Vanilla 1.16.1 hotbar selection frame is a 24x22 region at (0, 22).
-        DrawableHelper.drawTexture(matrices, 0, 0, 0, 0.0f, 22.0f, 24, 22, 256, 256);
-        matrices.pop();
-
-        for (row = 0; row < 3; row++) for (col = 0; col < 3; col++) {
-            int slot = row * 3 + col;
-            sx = x + col * (cellW + gap); sy = y + row * (cellH + gap);
-            ItemStack stack = client.player.inventory.getStack(slot);
-            if (!stack.isEmpty()) {
-                float scale = Math.min(cellW, cellH) / 20.0f;
-                float rendered = 16.0f * scale;
-                float ix = sx + (cellW - rendered) / 2.0f, iy = sy + (cellH - rendered) / 2.0f;
-                RenderSystem.pushMatrix();
-                RenderSystem.translatef(ix, iy, 0.0f);
-                RenderSystem.scalef(scale, scale, 1.0f);
-                client.getItemRenderer().renderInGuiWithOverrides(stack, 0, 0);
-                client.getItemRenderer().renderGuiItemOverlay(client.textRenderer, stack, 0, 0);
-                RenderSystem.popMatrix();
-            }
-        }
-
-        // Restore the GUI render state so Minecraft's F3 profiler pie chart can render afterward.
-        RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
-        RenderSystem.enableTexture();
-        RenderSystem.enableAlphaTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-    }
-
     private static final class HotbarConfigScreen extends Screen {
         private HotbarConfigScreen() { super(new LiteralText("SquareHotbar settings")); }
         @Override protected void init() {
@@ -156,8 +87,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
         @Override public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
             renderBackground(matrices);
             drawCenteredText(matrices, textRenderer, title, width / 2, 22, 0xFFFFFFFF);
-            drawCenteredText(matrices, textRenderer, new LiteralText("Настрой положение и размер панели"), width / 2, 40, 0xFFCCCCCC);
-            drawHotbarPanel(MinecraftClient.getInstance(), matrices);
+            drawCenteredText(matrices, textRenderer, new LiteralText("HUD rendering disabled for diagnostic test"), width / 2, 40, 0xFFCCCCCC);
             super.render(matrices, mouseX, mouseY, delta);
         }
         @Override public void onClose() { MinecraftClient.getInstance().openScreen(null); }
