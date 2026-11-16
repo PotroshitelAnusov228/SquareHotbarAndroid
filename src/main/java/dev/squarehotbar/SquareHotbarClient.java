@@ -1,6 +1,7 @@
 package dev.squarehotbar;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
@@ -33,6 +34,14 @@ public final class SquareHotbarClient implements ClientModInitializer {
             GLFW.GLFW_KEY_H,
             "category.squarehotbar.general"
         ));
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (configureKey.wasPressed()) {
+                if (client.player != null && client.currentScreen == null) {
+                    // The settings screen will be restored in a later diagnostic step.
+                }
+            }
+        });
     }
 
     public static void renderOnScreen(Screen screen, MatrixStack matrices) {
