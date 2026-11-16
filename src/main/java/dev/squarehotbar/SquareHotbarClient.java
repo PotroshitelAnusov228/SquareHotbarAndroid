@@ -126,6 +126,14 @@ public final class SquareHotbarClient implements ClientModInitializer {
                 RenderSystem.popMatrix();
             }
         }
+
+        // Restore the GUI render state so Minecraft's F3 profiler pie chart can render afterward.
+        RenderSystem.color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.enableTexture();
+        RenderSystem.enableAlphaTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.enableDepthTest();
     }
 
     private static final class HotbarConfigScreen extends Screen {
