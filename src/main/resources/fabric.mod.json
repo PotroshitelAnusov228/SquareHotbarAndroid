@@ -7,6 +7,5 @@
   "authors": ["BabaChai"],
   "environment": "client",
   "entrypoints": {"client": ["dev.squarehotbar.SquareHotbarClient"]},
-  "mixins": ["squarehotbar.mixins.json"],
   "depends": {"fabricloader": ">=0.11.7", "minecraft": "1.16.1", "java": ">=8"}
 }
