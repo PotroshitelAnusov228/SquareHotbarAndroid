@@ -42,7 +42,7 @@ public final class SquareHotbarClient implements ClientModInitializer {
             int x = left + col * cell;
             int y = top + row * cell;
 
-            DrawableHelper.fill(matrices, x, y, x + cell, y + cell, 0xB9000000);
+            DrawableHelper.fill(matrices, x, y, x + cell, y + cell, 0x66000000);
             int border = slot == selected ? 0xFFFFD54A : 0xFF777777;
             DrawableHelper.fill(matrices, x, y, x + cell, y + 1, border);
             DrawableHelper.fill(matrices, x, y + cell - 1, x + cell, y + cell, border);
@@ -51,11 +51,15 @@ public final class SquareHotbarClient implements ClientModInitializer {
 
             ItemStack stack = client.player.inventory.getStack(slot);
             if (!stack.isEmpty()) {
-                client.getItemRenderer().renderInGui(matrices, stack, x + (cell - 16) / 2, y + (cell - 16) / 2);
+                client.getItemRenderer().renderInGui(stack, x + (cell - 16) / 2, y + (cell - 16) / 2);
                 client.getItemRenderer().renderGuiItemOverlay(
-                    matrices, client.textRenderer, stack, x + (cell - 16) / 2, y + (cell - 16) / 2);
+                    client.textRenderer, stack, x + (cell - 16) / 2, y + (cell - 16) / 2);
             }
         }
+    }
+
+    public static void renderOnScreen(net.minecraft.client.gui.screen.Screen screen, MatrixStack matrices) {
+        // HUD is rendered by HudRenderCallback; no duplicate screen rendering.
     }
 
     private static void loadConfig() {
