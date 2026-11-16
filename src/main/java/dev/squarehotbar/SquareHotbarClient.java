@@ -5,7 +5,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
-import org.lwjgl.glfw.GLFW;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -19,20 +18,13 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static float xPosition = 0.195f;
     private static float yPosition = 0.174f;
     private static float sizeScale = 0.087f;
-    private static boolean hWasDown;
 
     @Override
     public void onInitializeClient() {
         loadConfig();
 
-        // Poll H after the client window exists instead of registering a Fabric key binding.
+        // Diagnostic: keep the tick callback but do not access GLFW or client window state.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            boolean hDown = GLFW.glfwGetKey(client.getWindow().getHandle(), GLFW.GLFW_KEY_H)
-                == GLFW.GLFW_PRESS;
-            if (hDown && !hWasDown && client.player != null && client.currentScreen == null) {
-                // Settings screen will be restored after this startup test passes.
-            }
-            hWasDown = hDown;
         });
     }
 
