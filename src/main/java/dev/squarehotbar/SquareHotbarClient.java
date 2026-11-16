@@ -12,24 +12,24 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 public final class SquareHotbarClient implements ClientModInitializer {
-    private static final Path CONFIG_FILE = FabricLoader.getInstance()
+    static final Path CONFIG_FILE = FabricLoader.getInstance()
         .getConfigDir().resolve("squarehotbar.properties");
 
-    private static float xPosition = 0.195f;
-    private static float yPosition = 0.174f;
-    private static float sizeScale = 0.087f;
+    static float xPosition = 0.195f;
+    static float yPosition = 0.174f;
+    static float sizeScale = 0.087f;
 
     @Override
     public void onInitializeClient() {
         loadConfig();
 
-        // Diagnostic: keep the tick callback but do not access GLFW or client window state.
+        // Keep this diagnostic callback empty: no GLFW or window access.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
         });
     }
 
     public static void renderOnScreen(Screen screen, MatrixStack matrices) {
-        // Rendering remains disabled for this diagnostic build.
+        // Rendering remains disabled while startup compatibility is being isolated.
     }
 
     private static void loadConfig() {
@@ -54,7 +54,22 @@ public final class SquareHotbarClient implements ClientModInitializer {
         }
     }
 
-    private static float clamp(float value, float min, float max) {
+    static float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    static void saveConfig() {
+        Properties properties = new Properties();
+        properties.setProperty("x", Float.toString(xPosition));
+        properties.setProperty("y", Float.toString(yPosition));
+        properties.setProperty("size", Float.toString(sizeScale));
+        try {
+            Files.createDirectories(CONFIG_FILE.getParent());
+            try (java.io.OutputStream output = Files.newOutputStream(CONFIG_FILE)) {
+                properties.store(output, "SquareHotbar position and size");
+            }
+        } catch (Exception ignored) {
+            // Keep the current settings in memory if saving fails.
+        }
     }
 }
