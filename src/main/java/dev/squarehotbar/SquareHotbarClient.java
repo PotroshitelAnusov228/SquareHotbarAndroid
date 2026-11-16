@@ -1,9 +1,13 @@
 package dev.squarehotbar;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -17,10 +21,18 @@ public final class SquareHotbarClient implements ClientModInitializer {
     private static float xPosition = 0.195f;
     private static float yPosition = 0.174f;
     private static float sizeScale = 0.087f;
+    private static KeyBinding configureKey;
 
     @Override
     public void onInitializeClient() {
         loadConfig();
+
+        configureKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.squarehotbar.configure",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            "category.squarehotbar.general"
+        ));
     }
 
     public static void renderOnScreen(Screen screen, MatrixStack matrices) {
