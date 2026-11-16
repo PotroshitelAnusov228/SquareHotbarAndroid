@@ -136,9 +136,9 @@ public final class SquareHotbarClient implements ClientModInitializer {
         @Override
         public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
             this.renderBackground(matrices);
-            drawCenteredString(matrices, this.textRenderer, this.title, this.width / 2, 24, 0xFFFFFF);
+            drawCenteredString(matrices, this.textRenderer, this.title.asString(), this.width / 2, 24, 0xFFFFFF);
             drawCenteredString(matrices, this.textRenderer,
-                new LiteralText("Adjust the hotbar position and size"), this.width / 2, 42, 0xCCCCCC);
+                "Adjust the hotbar position and size", this.width / 2, 42, 0xCCCCCC);
             super.render(matrices, mouseX, mouseY, delta);
         }
 
